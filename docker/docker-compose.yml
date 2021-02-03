@@ -1,0 +1,50 @@
+version: '3'
+services:
+  postgres:
+    restart: always
+    image: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgrespass
+      - POSTGRES_DB=postgres
+    ports:
+      - '5432:5432'
+    expose:
+      - '5432'
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+  nginx:
+    image: nginx:latest
+    ports:
+      - '80:80'
+      - '443:443'
+    expose:
+      - '443'
+      - '80'
+    volumes:
+      - ./../src:/var/www/html/
+      - ./site.conf:/etc/nginx/conf.d/site.conf
+      - ./logs:/var/log/nginx/
+      - ./ssl:/var/ssl/
+    depends_on:
+      - php
+      - ssl
+    links:
+      - php
+  php:
+    build: ./php
+    ports:
+      - '9000:9000'
+    expose:
+      - '9000'
+    container_name: php
+    volumes:
+      - ./../src:/var/www/html/
+    depends_on:
+      - postgres
+    links:
+      - postgres
+  ssl:
+    build: ./ssl
+    volumes:
+      - ./ssl:/ssl/
